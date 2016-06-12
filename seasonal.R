@@ -22,9 +22,12 @@ Problem2 <- function(x,prd){
 	#PACF of D1 and seasonal D1 at 4
 	#acf(d$residual,type="partial",lag=30)
 
-	model = arima(x,order=c(0,0,0),seasonal=list(order=c(0,0,0),period=prd))
-	bic = BIC(model)
-	param = c(0,0,0,0,0,0,prd)
+	amodel = arima(x,order=c(0,0,0),seasonal=list(order=c(0,0,0),period=prd))
+	aparam = c(0,0,0,0,0,0,prd)
+	bmodel = amodel
+	bparam = aparam
+	bic = BIC(bmodel)
+	aic = amodel$aic
 	#Determine the order
 	for(p in 0:5){
 		for(d in 0:3){
@@ -34,50 +37,75 @@ Problem2 <- function(x,prd){
 						for(Q in 0:5){
 							result = tryCatch({
 								temp = arima(x,order=c(p,d,q),seasonal=list(order=c(P,D,Q),period=prd))
-								if(BIC(temp) < bic)
-									model = temp
-									bic = BIC(model)
-									param = c(p,d,q,P,D,Q,prd)
+								if(BIC(temp) < bic){
+									bmodel = temp
+									bic = BIC(bmodel)
+									bparam = c(p,d,q,P,D,Q,prd)
+								}
+								if(temp$aic < aic){
+									amodel = temp
+									aic = amodel$aic
+									aparam = c(p,d,q,P,D,Q,prd)
+								}
 							},
 								error = function(e) {
 								message(e) 
 								return(NULL)
 							})
-							print(c(p,d,q,P,D,Q,bic))
+							print(c(p,d,q,P,D,Q,aic,bic))
 						}
 					}
 				}
 			}
 		}
 	}
-	print(model)
-	print(param)
-	Ret$model = model
-	Ret$param = param
-	return(Ret)
+	ret = list()
+	ret$aicModel = amodel
+	ret$aicParam = aparam
+	ret$bicModel = bmodel
+	ret$bicParam = bparam
+	return(ret)
 }
 x = read.csv("data/2-1_pe.csv",header=F,sep=",")
-Ret <- Problem2(x,4)
-param1 = Ret$param
-model1 = Ret$model
-png(filename="pe_ACF.png")
-acf(model1$residual,lag=30)
+ret1 <- Problem2(x,4)
+png(filename="pe_ACF_aic.png")
+acf(ret1$aicModel$residual,lag=30)
 dev.off()
-png(filename="pe_PACF.png")
-acf(model1$residual,type="partial",lag=30)
+png(filename="pe_PACF_aic.png")
+acf(ret1$aicModel$residual,type="partial",lag=30)
+dev.off()
+png(filename="pe_ACF_bic.png")
+acf(ret1$bicModel$residual,lag=30)
+dev.off()
+png(filename="pe_PACF_bic.png")
+acf(ret1$bicModel$residual,type="partial",lag=30)
 dev.off()
 
 x = read.csv("data/2-2_rsp.csv",header=F,sep=",")
-Ret <- Problem2(x,12)
-param2 = Ret$param
-model2 = Ret$model
-png(filename="rsp_ACF.png")
-acf(model2$residual,lag=30)
+ret2 <- Problem2(x,12)
+png(filename="rsp_ACF_aic.png")
+acf(ret2$aicModel$residual,lag=30)
 dev.off()
-png(filename="rsp_PACF.png")
-acf(model2$residual,type="partial",lag=30)
+png(filename="rsp_PACF_aic.png")
+acf(ret2$aicModel$residual,type="partial",lag=30)
 dev.off()
-print(model1)
-print(param1)
-print(model2)
-print(param2)
+png(filename="rsp_ACF_bic.png")
+acf(ret2$bicModel$residual,lag=30)
+dev.off()
+png(filename="rsp_PACF_bic.png")
+acf(ret2$bicModel$residual,type="partial",lag=30)
+dev.off()
+print("pe")
+print(ret1$aicModel)
+print(BIC(ret1$aicModel))
+print(ret1$aicParam)
+print(ret1$bicModel)
+print(BIC(ret1$bicModel))
+print(ret1$bicParam)
+print("rsp")
+print(ret2$aicModel)
+print(BIC(ret2$aicModel))
+print(ret2$aicParam)
+print(ret2$bicModel)
+print(BIC(ret2$bicModel))
+print(ret2$bicParam)
