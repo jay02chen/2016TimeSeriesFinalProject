@@ -22,33 +22,62 @@ Problem2 <- function(x,prd){
 	#PACF of D1 and seasonal D1 at 4
 	#acf(d$residual,type="partial",lag=30)
 
+	model = arima(x,order=c(0,0,0),seasonal=list(order=c(0,0,0),period=prd))
+	bic = BIC(model)
+	param = c(0,0,0,0,0,0,prd)
 	#Determine the order
-	d1 <- arima(x,order=c(2,1,0),seasonal=list(order=c(1,1,0),period=prd))
-	d2 <- arima(x,order=c(1,1,1),seasonal=list(order=c(1,1,0),period=prd))
-	d3 <- arima(x,order=c(0,1,2),seasonal=list(order=c(1,1,0),period=prd))
-	d4 <- arima(x,order=c(2,1,0),seasonal=list(order=c(0,1,1),period=prd))
-	d5 <- arima(x,order=c(1,1,1),seasonal=list(order=c(0,1,1),period=prd))
-	d6 <- arima(x,order=c(0,1,2),seasonal=list(order=c(0,1,1),period=prd))
-	ARIMApool = list(d1,d2,d3,d4,d5,d6)
-	BICscore = c()
-	for(i in seq_along(ARIMApool)) BICscore <- c(BICscore,BIC(ARIMApool[[i]]))
-	d = ARIMApool[BICscore==min(BICscore)][[1]]
-	print(d)
+	for(p in 0:5){
+		for(d in 0:3){
+			for(q in 0:5){
+				for(P in 0:5){
+					for(D in 0:3){
+						for(Q in 0:5){
+							result = tryCatch({
+								temp = arima(x,order=c(p,d,q),seasonal=list(order=c(P,D,Q),period=prd))
+								if(BIC(temp) < bic)
+									model = temp
+									bic = BIC(model)
+									param = c(p,d,q,P,D,Q,prd)
+							},
+								error = function(e) {
+								message(e) 
+								return(NULL)
+							})
+							print(c(p,d,q,P,D,Q,bic))
+						}
+					}
+				}
+			}
+		}
+	}
+	print(model)
+	print(param)
+	Ret$model = model
+	Ret$param = param
+	return(Ret)
 }
 x = read.csv("data/2-1_pe.csv",header=F,sep=",")
-d <- Problem2(x,4)
+Ret <- Problem2(x,4)
+param1 = Ret$param
+model1 = Ret$model
 png(filename="pe_ACF.png")
-acf(d$residual,lag=30)
+acf(model1$residual,lag=30)
 dev.off()
 png(filename="pe_PACF.png")
-acf(d$residual,type="partial",lag=30)
+acf(model1$residual,type="partial",lag=30)
 dev.off()
 
 x = read.csv("data/2-2_rsp.csv",header=F,sep=",")
-d <- Problem2(x,12)
+Ret <- Problem2(x,12)
+param2 = Ret$param
+model2 = Ret$model
 png(filename="rsp_ACF.png")
-acf(d$residual,lag=30)
+acf(model2$residual,lag=30)
 dev.off()
 png(filename="rsp_PACF.png")
-acf(d$residual,type="partial",lag=30)
+acf(model2$residual,type="partial",lag=30)
 dev.off()
+print(model1)
+print(param1)
+print(model2)
+print(param2)
