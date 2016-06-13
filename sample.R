@@ -7,5 +7,6 @@ t.x = 1 : n.sel
 yy = cbind(1,t.x,sin(t.x),cos(3*t.x))%*%beta0 + arima.sim(list(order=c(1,0,2),ar=c(0.2),ma=c(0.1,0.3)),sd=0.1,n=n.sel)
 plot(yy,type="l",ylab="Data",xlab="Periods",col="blue",main="Observations-Time(Sample)",lwd=2);
 points(yy, col="red",pch=20, lwd=5)
+print(yy)
 #dredge( , rank="" );
 #arima( , order = c( p ,0, q ) )
