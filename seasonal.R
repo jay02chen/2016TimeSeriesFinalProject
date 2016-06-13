@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-Problem2 <- function(x,prd){
+sarimaModelSelection <- function(x,prd){
 	#ACF of data
 	#tsx = ts(x)
 	#acfx = acf(tsx)
@@ -67,7 +67,7 @@ Problem2 <- function(x,prd){
 	return(ret)
 }
 x = read.csv("data/2-1_pe.csv",header=F,sep=",")
-ret1 <- Problem2(x,4)
+ret1 <- sarimaModelSelection(x,4)
 png(filename="pe_ACF_aic.png")
 acf(ret1$aicModel$residual,lag=30)
 dev.off()
@@ -82,7 +82,7 @@ acf(ret1$bicModel$residual,type="partial",lag=30)
 dev.off()
 
 x = read.csv("data/2-2_rsp.csv",header=F,sep=",")
-ret2 <- Problem2(x,12)
+ret2 <- sarimaModelSelection(x,12)
 png(filename="rsp_ACF_aic.png")
 acf(ret2$aicModel$residual,lag=30)
 dev.off()

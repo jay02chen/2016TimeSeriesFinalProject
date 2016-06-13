@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 library("MTS")
-Problem4 <- function(x,prd){
+VARMAmodelSelection <- function(x,prd){
 	#ACF of data
 	#tsx = ts(x)
 	#acfx = acf(tsx)
@@ -46,7 +46,7 @@ Problem4 <- function(x,prd){
 x = read.csv("data/4-2_financial.csv",header=F,sep=",")
 x = sapply(x[2:nrow(x), c(1,2)],as.character)
 class(x) <- "numeric"
-ret <- Problem4(x,4)
+ret <- VARMAmodelSelection(x,4)
 png(filename="financial_ACF_aic.png")
 acf(ret$aicModel$residual,lag=30)
 dev.off()
@@ -62,7 +62,7 @@ dev.off()
 
 print(ret$aicModel)
 print(BIC(ret$aicModel))
-print(ret$aicParam)
+print(ret$aicParam) #(5,5)
 print(ret$bicModel)
 print(BIC(ret$bicModel))
-print(ret$bicParam)
+print(ret$bicParam) #(2,0)
