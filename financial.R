@@ -1,6 +1,8 @@
 #!/usr/bin/env Rscript
 
 library("MTS")
+library(gtools)
+library("forecast")
 VARMAmodelSelection <- function(x,diff){
 	#ACF of data
 	#tsx = ts(x)
@@ -13,6 +15,11 @@ VARMAmodelSelection <- function(x,diff){
 		times = times + 1
 		print(times)
 	}
+	lambda1 = BoxCox.lambda(xx[,1])
+	lambda3 = BoxCox.lambda(xx[,2])
+	yy1 = BoxCox(xx[,1], lambda1)
+	yy3 = BoxCox(xx[,2], lambda3)
+	yy = cbind(yy1, yy3)
 	amodel = VARMA(xx,0,0)
 	aparam = c(0,0)
 	bmodel = amodel
@@ -20,35 +27,38 @@ VARMAmodelSelection <- function(x,diff){
 	bic = bmodel$bic
 	aic = amodel$aic
 	#Determine the order
-	for(p in 0:5){
-		for(q in 0:5){
-			result = tryCatch({
-				temp = VARMA(xx,p,q)
-				if(temp$bic < bic){
-					print("update bic")
-					bmodel = temp
-					bic = bmodel$bic
-					bparam = c(p,q)
-				}
-				if(temp$aic < aic){
-					print("update aic")
-					amodel = temp
-					aic = amodel$aic
-					aparam = c(p,q)
-				}
-			},
-				error = function(e) {
-				message(e) 
-				return(NULL)
-			})
-			print(c(p,q,aic,bic))
-		}
+	params_set = 0:5
+	params = permutations(n=6, r=2,v=params_set,repeats.allowed=T)
+	for (idx in 2:nrow(params)) {
+	  p = params[idx,1]
+	  q = params[idx,2]
+		result = tryCatch({
+			temp = VARMA(yy,p,q)
+			if(temp$bic < bic){
+				print("update bic")
+				bmodel = temp
+				bic = bmodel$bic
+				bparam = c(p,q)
+			}
+			if(temp$aic < aic){
+				print("update aic")
+				amodel = temp
+				aic = amodel$aic
+				aparam = c(p,q)
+			}
+		},
+			error = function(e) {
+			message(e) 
+			return(NULL)
+		})
+		print(c(p,q,aic,bic))
 	}
 	ret = list()
 	ret$aicModel = amodel
 	ret$aicParam = aparam
 	ret$bicModel = bmodel
 	ret$bicParam = bparam
+	ret$lambda = c(lambda1, lambda3)
 	return(ret)
 }
 x = read.csv("data/4-2_financial.csv",header=F,sep=",")
